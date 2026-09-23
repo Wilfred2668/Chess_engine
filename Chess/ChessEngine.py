@@ -79,40 +79,59 @@ class GameState():
     Generate all rook moves
     '''
     def getRookMoves(self, r, c, moves):
-        enemyPiece = 'b' if self.whiteToMove else 'w'
-        for i in range(r-1, -1, -1):
-            if self.board[i][c] == "--":
-                moves.append(Move((r, c), (i,c), self.board))
-            elif self.board[i][c][0] == enemyPiece:
-                moves.append(Move((r, c), (i,c), self.board))
-                break
-            else:
-                break
-        for i in range(r+1, 8):
-            if self.board[i][c] == "--":
-                moves.append(Move((r, c), (i,c), self.board))
-            elif self.board[i][c][0] == enemyPiece:
-                moves.append(Move((r, c), (i,c), self.board))
-                break
-            else:
-                break
+        # enemyPiece = 'b' if self.whiteToMove else 'w'
+        # for i in range(r-1, -1, -1):
+        #     if self.board[i][c] == "--":
+        #         moves.append(Move((r, c), (i,c), self.board))
+        #     elif self.board[i][c][0] == enemyPiece:
+        #         moves.append(Move((r, c), (i,c), self.board))
+        #         break
+        #     else:
+        #         break
+        # for i in range(r+1, 8):
+        #     if self.board[i][c] == "--":
+        #         moves.append(Move((r, c), (i,c), self.board))
+        #     elif self.board[i][c][0] == enemyPiece:
+        #         moves.append(Move((r, c), (i,c), self.board))
+        #         break
+        #     else:
+        #         break
 
-        for i in range(c-1, -1, -1):
-            if self.board[r][i] == "--":
-                moves.append(Move((r, c), (r,i), self.board))
-            elif self.board[r][i][0] == enemyPiece:
-                moves.append(Move((r, c), (r,i), self.board))
-                break
-            else:
-                break
-        for i in range(c+1, 8):
-            if self.board[r][i] == "--":
-                moves.append(Move((r, c), (r,i), self.board))
-            elif self.board[r][i][0] == enemyPiece:
-                moves.append(Move((r, c), (r,i), self.board))
-                break
-            else:
-                break
+        # for i in range(c-1, -1, -1):
+        #     if self.board[r][i] == "--":
+        #         moves.append(Move((r, c), (r,i), self.board))
+        #     elif self.board[r][i][0] == enemyPiece:
+        #         moves.append(Move((r, c), (r,i), self.board))
+        #         break
+        #     else:
+        #         break
+        # for i in range(c+1, 8):
+        #     if self.board[r][i] == "--":
+        #         moves.append(Move((r, c), (r,i), self.board))
+        #     elif self.board[r][i][0] == enemyPiece:
+        #         moves.append(Move((r, c), (r,i), self.board))
+        #         break
+        #     else:
+        #         break
+        directions = [(-1,0),(0,-1),(1,0),(0,1)]
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        for d in directions:
+            for i in range(1, 8):
+                endRow = r + d[0] * i
+                endCol = c + d[1] * i
+
+                if 0 <= endRow < 8 and 0 <= endCol < 8:
+                    endPiece = self.board[endRow][endCol]
+                    if endPiece == '--':
+                        moves.append(Move((r, c), (endRow,endCol), self.board))
+                    elif endPiece[0] == enemyColor:
+                        moves.append(Move((r, c), (endRow,endCol), self.board))
+                        break
+                    else:
+                        break
+                else:
+                    break
+        
     '''
     Generate all Knight moves
     '''
