@@ -177,7 +177,8 @@ class GameState():
     Generate all Queen moves
     '''
     def getQueenMoves(self, r, c, moves):
-        pass
+        self.getRookMoves(r,c,moves)
+        self.getBishopMoves(r,c,moves)
 
     '''
     Generate all King moves
