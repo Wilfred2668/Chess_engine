@@ -22,6 +22,10 @@ class GameState():
         self.moveFunctions = {'p': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getKnightMoves, 'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves} # map all the pieces to their move generation function
         self.whiteToMove = True # track whose move it is white or black
         self.moveLog = [] # maintains move logs
+        self.blackKingLocation = (0,4) # Keeps track of black king
+        self.whiteKingLocation = (7,4) # Keeps track of white king
+        self.checkMate = False
+        self.staleMate = False
 
     '''
     Makes moves by:
@@ -31,10 +35,16 @@ class GameState():
     4. change move to opponent by setting whiteToMove as not whiteToMove
     '''
     def makeMove(self, move):
-        self.board[move.startSqRow][move.startSqCol] = "--"
-        self.board[move.endSqRow][move.endSqCol] = move.pieceMoved
+        self.board[move.startRow][move.startCol] = "--"
+        self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)
         self.whiteToMove = not self.whiteToMove
+        # Update kings location if moved
+        if move.pieceMoved == 'bK':
+            self.blackKingLocation = (move.endRow, move.endCol)
+        elif move.pieceMoved == 'wK':
+            self.whiteKingLocation = (move.endRow, move.endCol)
+
 
     '''
     Undoing a move
@@ -42,16 +52,65 @@ class GameState():
     def undoMove(self):
         if len(self.moveLog) != 0:
             move = self.moveLog.pop()
-            self.board[move.startSqRow][move.startSqCol] = move.pieceMoved
-            self.board[move.endSqRow][move.endSqCol] = move.pieceCaptured
+            self.board[move.startRow][move.startCol] = move.pieceMoved
+            self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteToMove = not self.whiteToMove
+            # Update kings location if needed
+            if move.pieceMoved == 'bK':
+                self.blackKingLocation = (move.startRow, move.startCol)
+            elif move.pieceMoved == 'wK':
+                self.whiteKingLocation = (move.startRow, move.startCol)
 
     '''
     All moves considering check
     '''
     def getValidMoves(self):
-        return self.getAllPossibleMoves()
+        # 1. Generate all possible moves
+        moves = self.getAllPossibleMoves()
 
+        # 2. for each move, make a move
+        for i in range(len(moves)-1, -1, -1):
+            self.makeMove(moves[i])
+            # 3. generate all the opponents move
+            # 4. for each of your opponents moves, see if they attack your king
+            # 5. if they do attack your king not a valid move
+            self.whiteToMove = not self.whiteToMove
+            if self.isCheck():
+                moves.pop(i)
+            self.whiteToMove = not self.whiteToMove
+            self.undoMove()
+
+        if len(moves) == 0: # either checkmate or stalemate
+            if self.isCheck():
+                self.checkMate = True
+            else:
+                self.staleMate = True
+        else:
+            self.checkMate = False
+            self.staleMate = False
+        return moves
+
+    '''
+    Determine if current player is in check
+    '''
+    def isCheck(self):
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
+        else:
+            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
+        
+    '''
+    Determine if the enemy can attack the square r, c
+    '''
+    def squareUnderAttack(self, r, c):
+        self.whiteToMove = not self.whiteToMove
+        oppMoves = self.getAllPossibleMoves()
+        self.whiteToMove = not self.whiteToMove
+        for move in oppMoves:
+            if move.endRow == r and move.endCol == c:
+                return True
+        return False
+    
     '''
     All moves without considering a check
     '''
@@ -242,14 +301,14 @@ class Move():
     }
 
     def __init__(self, startSq, endSq, board):
-        self.startSqRow = startSq[0]
-        self.startSqCol = startSq[1]
-        self.endSqRow = endSq[0]
-        self.endSqCol = endSq[1]
+        self.startRow = startSq[0]
+        self.startCol = startSq[1]
+        self.endRow = endSq[0]
+        self.endCol = endSq[1]
 
-        self.pieceMoved = board[self.startSqRow][self.startSqCol] # moved piece
-        self.pieceCaptured = board[self.endSqRow][self.endSqCol] # captured piece
-        self.moveID = self.startSqRow*1000+self.startSqCol*100+self.endSqRow*10+self.endSqCol # unique id for each move for object comparison purpose
+        self.pieceMoved = board[self.startRow][self.startCol] # moved piece
+        self.pieceCaptured = board[self.endRow][self.endCol] # captured piece
+        self.moveID = self.startRow*1000+self.startCol*100+self.endRow*10+self.endCol # unique id for each move for object comparison purpose
 
     '''
     Overriding __eq__ method to compare moveID of two moves instead of default __eq__ which compares address
@@ -264,7 +323,7 @@ class Move():
     Genrates chess notation
     '''
     def getChessNotation(self):
-        return self.getRankFile(self.startSqRow, self.startSqCol) + self.getRankFile(self.endSqRow, self.endSqCol)
+        return self.getRankFile(self.startRow, self.startCol) + self.getRankFile(self.endRow, self.endCol)
 
     '''
     Converts columns to files and rows to ranks
