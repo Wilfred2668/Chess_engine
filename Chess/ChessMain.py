@@ -90,6 +90,7 @@ def main():
         # If moveMade is True, the for next state generate all the possible moves and set moveMade to False
         if moveMade:
             validMoves = gs.getValidMoves()
+            print(len(validMoves))
             moveMade = False
         
 
